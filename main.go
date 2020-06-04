@@ -25,6 +25,7 @@ func main() {
 		httpAddr     = flag.String("http-addr", ":8080", "HTTP listen address")
 		lfsServerURL = flag.String("url", "", "LFS server URL")
 		directory    = flag.String("directory", "./objects", "cache directory")
+		tls          = flag.Bool("tls", false, "enable SSL/TLS")
 		printVersion = flag.Bool("v", false, "print version")
 	)
 
@@ -57,5 +58,13 @@ func main() {
 	}
 
 	level.Info(logger).Log("event", "listening", "proxy-endpoint", addr.String(), "transport", "HTTP", "addr", *httpAddr)
-	panic(http.ListenAndServe(*httpAddr, s.Handle()))
+	if *tls {
+		srv := &http.Server {
+			Addr: *httpAddr,
+			Handler: s.Handle(),
+		}
+		panic(srv.ListenAndServeTLS("./certs/server.crt", "./certs/server.key"))
+	} else {
+		panic(http.ListenAndServe(*httpAddr, s.Handle()))
+	}
 }
